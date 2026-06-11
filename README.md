@@ -19,6 +19,11 @@ An LLM ([Claude](https://docs.claude.com)) turns messy list lines like
 Flow end to end: **iOS app / Siri → `server` → `kroger` package → Kroger cart.**
 The CLI below drives the same `kroger` package directly.
 
+**Local dev:** `just dev` runs the API with hot-reload (the `npm start` here).
+`just` (no args) lists every task — install, login, lint, docker, etc. Install
+[just](https://github.com/casey/just), or just read `justfile` for the raw
+commands.
+
 ## How it works
 
 ```
