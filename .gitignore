@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+
+# Persisted OAuth tokens and resolution cache — never commit these
+.kroger/
+*.token.json
+upc_cache.json
