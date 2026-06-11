@@ -1,0 +1,35 @@
+# XcodeGen spec — generates ShoppingList.xcodeproj from these source files.
+# Install: brew install xcodegen
+# Generate: cd ios/ShoppingList && xcodegen generate && open ShoppingList.xcodeproj
+name: ShoppingList
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+targets:
+  ShoppingList:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.shoppinglist
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"   # iPhone + iPad
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: Shopping List
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        # Privacy strings — shown in the system permission prompts. Required, or
+        # the app crashes the first time it touches the mic / speech recognizer.
+        NSMicrophoneUsageDescription: "Used to dictate shopping-list items."
+        NSSpeechRecognitionUsageDescription: "Used to turn your dictation into text."
