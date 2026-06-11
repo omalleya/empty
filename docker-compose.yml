@@ -1,0 +1,35 @@
+# Cart import server.
+#
+# First time only — authorize the family Kroger account (publishes 8088 so the
+# OAuth redirect can reach the container; opens a URL you complete in a browser):
+#
+#   docker compose run --rm --service-ports server \
+#       uv run --frozen kroger-cart --login
+#
+# Then run the API:
+#
+#   docker compose up -d
+#
+# Credentials come from .env (KROGER_CLIENT_ID/SECRET, KROGER_LOCATION_ID,
+# ANTHROPIC_API_KEY). The token + UPC cache persist on the `kroger-data` volume.
+
+services:
+  server:
+    build: .
+    image: kroger-cart-server
+    env_file: .env
+    environment:
+      # Persist auth + cache on the volume (override .env if it sets these).
+      KROGER_TOKEN_STORE: /data/token.json
+      KROGER_UPC_CACHE: /data/upc_cache.json
+      # Must match the Redirect URI registered on your Kroger app.
+      KROGER_REDIRECT_URI: http://localhost:8088/callback
+    ports:
+      - "8000:8000"   # the API
+      - "8088:8088"   # OAuth redirect capture — only needed during --login
+    volumes:
+      - kroger-data:/data
+    restart: unless-stopped
+
+volumes:
+  kroger-data:

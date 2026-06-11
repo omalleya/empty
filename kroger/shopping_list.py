@@ -65,10 +65,21 @@ def main(argv: list[str] | None = None) -> int:
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--find-store", metavar="ZIP", help="List nearby stores for a zip code.")
     g.add_argument("--list", metavar="FILE", help="File of shopping-list lines (or - for stdin).")
+    g.add_argument(
+        "--login",
+        action="store_true",
+        help="One-time Kroger cart authorization (saves a refresh token). "
+        "Needed once before the server can push to the cart unattended.",
+    )
     g.add_argument("source", nargs="?", help="Same as --list; '-' reads stdin.")
     args = ap.parse_args(argv)
 
     client = KrogerClient()
+
+    if args.login:
+        client.auth.user_token()  # triggers the browser flow + persists the token
+        print("Kroger cart authorization complete; refresh token saved.")
+        return 0
 
     if args.find_store:
         for loc in client.find_location(args.find_store):

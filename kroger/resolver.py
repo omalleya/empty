@@ -18,6 +18,7 @@ Model: claude-opus-4-8 (see https://docs.claude.com). Structured outputs via
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -28,7 +29,8 @@ from .client import KrogerClient
 from .models import Product, ResolvedItem
 
 _MODEL = "claude-opus-4-8"
-_CACHE_PATH = Path("upc_cache.json")
+# Override with KROGER_UPC_CACHE to persist the cache (e.g. onto a Docker volume).
+_CACHE_PATH = Path(os.environ.get("KROGER_UPC_CACHE", "upc_cache.json"))
 
 # Leading quantity like "2 milk", "2x milk", "milk x2"
 _QTY_RE = re.compile(r"^\s*(\d+)\s*x?\s+|\s+x\s*(\d+)\s*$", re.IGNORECASE)

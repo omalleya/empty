@@ -5,25 +5,36 @@ app's **Send to cart** button and the **"Hey Siri, send my list"** intent POST
 to. Running it server-side keeps the family's Kroger OAuth refresh token off the
 phone — the app only sends plain item-name strings.
 
-## Run
+## Run with Docker (recommended)
 
 ```bash
-uv run --extra server uvicorn server.app:app --host 0.0.0.0 --port 8000
+# 1. One-time: authorize the family Kroger account. Publishes 8088 so the OAuth
+#    redirect reaches the container; it prints a URL you open in a browser.
+docker compose run --rm --service-ports server uv run --frozen kroger-cart --login
+
+# 2. Run the API
+docker compose up -d
 ```
 
-Needs the same environment as the CLI (`KROGER_CLIENT_ID/SECRET`,
-`KROGER_LOCATION_ID`, `ANTHROPIC_API_KEY`). With uv:
+Credentials come from `.env` (`KROGER_CLIENT_ID/SECRET`, `KROGER_LOCATION_ID`,
+`ANTHROPIC_API_KEY`). The refresh token and UPC cache persist on the
+`kroger-data` volume, so step 1 is genuinely once. API on
+`http://localhost:8000` (`/docs` for interactive docs).
+
+## Run without Docker
 
 ```bash
+# One-time cart login (opens a browser to authorize)
+uv run --env-file .env kroger-cart --login
+
+# Serve
 uv run --env-file .env --extra server uvicorn server.app:app --port 8000
 ```
 
-Interactive API docs at `http://localhost:8000/docs`.
-
-> **One-time cart login.** The cart push needs a Kroger refresh token. Mint it
-> once on the server host by running the CLI interactively (`uv run --env-file .env
-> kroger-cart --list somelist.txt` and completing the browser authorization).
-> After that the token in `KROGER_TOKEN_STORE` is reused unattended.
+> **Why the one-time login.** The cart push needs a Kroger refresh token, and
+> minting it requires a browser authorization that can't happen on a headless
+> first boot. `--login` does exactly that and saves the token to
+> `KROGER_TOKEN_STORE`; everything after runs unattended.
 
 ## Endpoints
 
