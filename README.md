@@ -8,6 +8,17 @@ It uses the **official Kroger public API** — no scraping, no browser automatio
 An LLM ([Claude](https://docs.claude.com)) turns messy list lines like
 `a couple gallons of 2% milk` into a real product UPC.
 
+## This repo
+
+| Path | What it is |
+|------|------------|
+| `kroger/` | the core package + `kroger-cart` CLI (this README) |
+| `server/` | FastAPI service wrapping the importer — `POST /cart/import` ([server/README.md](server/README.md)) |
+| `ios/` | SwiftUI app: shopping list + dictation + Siri, posts to the server ([ios/README.md](ios/README.md)) |
+
+Flow end to end: **iOS app / Siri → `server` → `kroger` package → Kroger cart.**
+The CLI below drives the same `kroger` package directly.
+
 ## How it works
 
 ```
