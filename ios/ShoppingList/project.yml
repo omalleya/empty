@@ -29,6 +29,10 @@ targets:
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
+        # Your cart-import backend (the service in front of the Python `kroger`
+        # package). Empty = "Send to cart" reports "not configured". Set it to
+        # e.g. https://cart.yourdomain.com and the app POSTs {baseURL}/cart/import.
+        CartBackendURL: ""
         # Privacy strings — shown in the system permission prompts. Required, or
         # the app crashes the first time it touches the mic / speech recognizer.
         NSMicrophoneUsageDescription: "Used to dictate shopping-list items."

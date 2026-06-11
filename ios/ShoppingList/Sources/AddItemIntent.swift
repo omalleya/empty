@@ -24,6 +24,7 @@ struct AddItemIntent: AppIntent {
 
 /// Registers spoken phrases with Siri/Spotlight automatically on install — no
 /// per-user setup. Phrases must include the app name (`\(.applicationName)`).
+/// A target may have exactly one AppShortcutsProvider, so both intents live here.
 struct ShoppingListShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -34,6 +35,15 @@ struct ShoppingListShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Add Item",
             systemImageName: "cart.badge.plus"
+        )
+        AppShortcut(
+            intent: SendListToCartIntent(),
+            phrases: [
+                "Send my list to \(.applicationName)",
+                "Send my shopping list to the cart in \(.applicationName)"
+            ],
+            shortTitle: "Send to Cart",
+            systemImageName: "paperplane"
         )
     }
 }

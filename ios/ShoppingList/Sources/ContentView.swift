@@ -5,6 +5,8 @@ struct ContentView: View {
     @StateObject private var speech = SpeechRecognizer()
     @State private var newItemText = ""
     @State private var permissionDenied = false
+    @State private var isSending = false
+    @State private var cartMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -37,10 +39,21 @@ struct ContentView: View {
             .navigationTitle("Shopping List")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { EditButton() }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     if store.items.contains(where: \.isChecked) {
                         Button("Clear ✓") { store.clearChecked() }
                     }
+                    Button {
+                        Task { await sendToCart() }
+                    } label: {
+                        if isSending {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "paperplane")
+                        }
+                    }
+                    .disabled(store.items.isEmpty || isSending)
+                    .accessibilityLabel("Send list to cart")
                 }
             }
             .safeAreaInset(edge: .bottom) { entryBar }
@@ -48,6 +61,17 @@ struct ContentView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Enable Microphone and Speech Recognition in Settings to dictate.")
+            }
+            .alert(
+                "Cart",
+                isPresented: Binding(
+                    get: { cartMessage != nil },
+                    set: { if !$0 { cartMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(cartMessage ?? "")
             }
         }
     }
@@ -82,6 +106,18 @@ struct ContentView: View {
     private func add() {
         store.add(newItemText)
         newItemText = ""
+    }
+
+    @MainActor
+    private func sendToCart() async {
+        isSending = true
+        defer { isSending = false }
+        do {
+            let result = try await HTTPCartBackend().send(items: store.items.map(\.name))
+            cartMessage = result.message
+        } catch {
+            cartMessage = "Couldn't send: \(error.localizedDescription)"
+        }
     }
 
     private func toggleDictation() {

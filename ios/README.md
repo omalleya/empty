@@ -40,7 +40,9 @@ in `Sources/` into the project, and add the two privacy strings from
 | `Sources/ShoppingItem.swift` | the model (`Codable`) |
 | `Sources/ShoppingListStore.swift` | state + JSON persistence (shared with Siri) |
 | `Sources/SpeechRecognizer.swift` | live speech-to-text (Speech + AVAudioEngine) |
-| `Sources/AddItemIntent.swift` | the Siri / App Intent + spoken phrases |
+| `Sources/AddItemIntent.swift` | "add item" Siri intent + both spoken phrases |
+| `Sources/SendListToCartIntent.swift` | "send list to cart" Siri intent |
+| `Sources/CartBackend.swift` | posts the list to your import service (stub) |
 | `project.yml` | XcodeGen project spec (targets, Info.plist, privacy strings) |
 
 ## Siri: yes, you can send commands to a specific app
@@ -54,6 +56,30 @@ limits are. Short version: an app can expose **App Intents**, and Siri/Spotlight
 the Shortcuts app can invoke them by phrase — but the app has to declare the
 intent; Siri can't pipe arbitrary free-form commands into an app that hasn't
 opted in.
+
+## Send to cart (the backend hand-off)
+
+The ✈️ toolbar button — and "Hey Siri, send my list to Shopping List" — POST the
+list to a backend you run:
+
+```
+POST {CartBackendURL}/cart/import
+Content-Type: application/json
+
+{ "items": ["2% milk", "bananas", "2 dozen eggs"] }
+```
+
+The backend resolves each line to a UPC and adds it to the Kroger cart — that's
+exactly what the Python `kroger` package at the repo root does, so the service
+is a thin HTTP wrapper around `kroger.shopping_list.import_list(...)`. Keeping it
+server-side means the family's Kroger OAuth tokens never touch the phone; the app
+only sends plain item names.
+
+**This is a stub** — there's no server yet, and `CartBackendURL` is empty in
+`project.yml` (so "Send to cart" reports "not configured" until you set it). To
+wire it up: deploy a small endpoint in front of the `kroger` package, then set
+`CartBackendURL` to its base URL. `CartBackend` is a protocol, so you can also
+drop in a different implementation (direct API, on-device, a mock for previews).
 
 ## Status
 
