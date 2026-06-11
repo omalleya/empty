@@ -25,34 +25,112 @@ shopping list ──▶ resolver (LLM) ──▶ Kroger Products API ──▶ p
    the one step that needs a user login — done once in the browser, then a
    refresh token is saved so you never log in again.
 
-## Setup
+## What you need before running
 
-Uses [uv](https://docs.astral.sh/uv/) for env + dependency management.
+| Requirement | Why | Where |
+|-------------|-----|-------|
+| [uv](https://docs.astral.sh/uv/) | env + dependency management | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| Python ≥ 3.10 | runtime (uv can install it for you) | `uv python install 3.11` |
+| A Kroger account | the family account whose cart gets filled | <https://www.kroger.com> (or fredmeyer.com, etc.) |
+| Kroger developer app | API client id + secret | see below |
+| Anthropic API key | the LLM resolver | <https://console.anthropic.com> |
 
-1. Register an app at <https://developer.kroger.com> to get a client id/secret.
-   Add a Redirect URI (e.g. `http://localhost:8088/callback`) and request the
-   `product.compact` and `cart.basic:write` scopes.
-2. `uv sync` (creates `.venv` and installs from `uv.lock`).
-3. `cp .env.example .env` and fill it in. The `dev` extra includes
-   `python-dotenv`; `uv run` also auto-loads `.env` if you pass `--env-file .env`.
+### 1. Get Kroger API credentials
+
+1. Go to <https://developer.kroger.com> and sign in (same login as your store
+   account works).
+2. Create an application (look for **Applications → Add Application** /
+   **Create Application**). Fill in:
+   - **App name** — anything, e.g. `family-cart`.
+   - **Environment** — **Production** (the public API serves real store data).
+   - **Redirect URI** — must match `KROGER_REDIRECT_URI` in your `.env`
+     **exactly**. Use `http://localhost:8088/callback` (the default this tool
+     listens on). A loopback URI is fine for a personal tool.
+3. After it's created, copy the **Client ID** and **Client Secret** — these go in
+   `.env` as `KROGER_CLIENT_ID` / `KROGER_CLIENT_SECRET`.
+4. **Scopes / API access.** This tool uses two scopes:
+   - `product.compact` — Products + Locations search. Available to all apps.
+   - `cart.basic:write` — adding to the cart. Some accounts need to **request
+     access** to the Cart API for the app (there's an option on the app/API
+     page). If your first cart push fails with a 403, that's almost always
+     missing Cart API access — request it and wait for approval.
+
+> The Client Secret is shown once. If you lose it, regenerate it on the app page
+> and update `.env`.
+
+### 2. Get an Anthropic API key
+
+Create one at <https://console.anthropic.com> → **API Keys**. Put it in `.env` as
+`ANTHROPIC_API_KEY`. (Used only by the resolver — search-term phrasing and
+product selection.)
+
+### 3. Put the credentials in `.env`
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
+
+| Variable | Required | What it is |
+|----------|----------|------------|
+| `KROGER_CLIENT_ID` | ✅ | from your Kroger developer app |
+| `KROGER_CLIENT_SECRET` | ✅ | from your Kroger developer app |
+| `KROGER_REDIRECT_URI` | ✅ | must match the app's Redirect URI; default `http://localhost:8088/callback` |
+| `ANTHROPIC_API_KEY` | ✅ | from console.anthropic.com |
+| `KROGER_LOCATION_ID` | ✅ (after step 5) | your store; filled in once you've looked it up |
+| `KROGER_TOKEN_STORE` | optional | where the saved refresh token lives (default `~/.kroger/token.json`) |
+
+`.env` is gitignored — credentials never get committed.
+
+### 4. Install
+
+```bash
+uv sync   # creates .venv, installs from uv.lock, builds the kroger-cart script
+```
+
+### 5. Find your store's locationId
+
+Product prices and availability are per-store, so you need a `locationId`. Look
+it up by zip:
+
+```bash
+uv run --env-file .env kroger-cart --find-store 97232
+```
+
+That prints nearby stores like:
+
+```
+70100123  FRED MEYER   Interstate  (3030 NE Weidler St, Portland, OR)
+...
+```
+
+Copy the id of the store you want into `.env` as `KROGER_LOCATION_ID`. (This step
+only needs `product.compact`, so it works before you've sorted out cart access.)
 
 ## Usage
 
-`uv sync` installs a `kroger-cart` console script. Run it via `uv run`:
+`uv sync` installs a `kroger-cart` console script. Pass `--env-file .env` so uv
+loads your credentials:
 
 ```bash
-# Find your store, then paste the locationId into .env (KROGER_LOCATION_ID)
-uv run kroger-cart --find-store 97232
+# Import a list — the FIRST cart push opens a browser to authorize the family
+# account once, then saves a refresh token so you never log in again.
+uv run --env-file .env kroger-cart --list groceries.txt
 
-# Import a list — first cart push opens the browser to authorize once
-uv run kroger-cart --list groceries.txt
-
-# Pipe it instead
-echo "2% milk\nbananas\n2 dozen eggs" | uv run kroger-cart -
+# Pipe it instead of using a file
+echo "2% milk\nbananas\n2 dozen eggs" | uv run --env-file .env kroger-cart -
 ```
 
-Items the LLM wasn't confident about are printed with their candidates so you
-can confirm them; confirmed choices get cached for next time.
+`groceries.txt` is just one item per line (`2% milk`, `2 dozen eggs`, …).
+
+Items the LLM wasn't confident about are printed with their candidate products so
+you can confirm them; confirmed choices get cached in `upc_cache.json` and reused
+next time.
+
+> Don't want to pass `--env-file` every time? Either `export $(grep -v '^#' .env | xargs)`
+> in your shell first, or run under a tool that auto-loads `.env`. The
+> credentials are read from the process environment either way.
 
 ## Layout
 
