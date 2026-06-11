@@ -27,25 +27,32 @@ shopping list ──▶ resolver (LLM) ──▶ Kroger Products API ──▶ p
 
 ## Setup
 
+Uses [uv](https://docs.astral.sh/uv/) for env + dependency management.
+
 1. Register an app at <https://developer.kroger.com> to get a client id/secret.
    Add a Redirect URI (e.g. `http://localhost:8088/callback`) and request the
    `product.compact` and `cart.basic:write` scopes.
-2. `pip install -r requirements.txt`
-3. `cp .env.example .env` and fill it in. Load it however you like (e.g.
-   `export $(grep -v '^#' .env | xargs)` or `python-dotenv`).
+2. `uv sync` (creates `.venv` and installs from `uv.lock`).
+3. `cp .env.example .env` and fill it in. The `dev` extra includes
+   `python-dotenv`; `uv run` also auto-loads `.env` if you pass `--env-file .env`.
 
 ## Usage
 
+`uv sync` installs a `kroger-cart` console script. Run it via `uv run`:
+
 ```bash
 # Find your store, then paste the locationId into .env (KROGER_LOCATION_ID)
-python -m kroger.shopping_list --find-store 97232
+uv run kroger-cart --find-store 97232
 
 # Import a list — first cart push opens the browser to authorize once
-python -m kroger.shopping_list --list groceries.txt
+uv run kroger-cart --list groceries.txt
 
-# Items the LLM wasn't confident about are printed with their candidates so you
-# can confirm them; confirmed choices get cached for next time.
+# Pipe it instead
+echo "2% milk\nbananas\n2 dozen eggs" | uv run kroger-cart -
 ```
+
+Items the LLM wasn't confident about are printed with their candidates so you
+can confirm them; confirmed choices get cached for next time.
 
 ## Layout
 
