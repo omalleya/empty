@@ -1,0 +1,22 @@
+[package]
+name = "kroger-cart-server"
+version = "0.1.0"
+edition = "2021"
+description = "Cart import server: resolves free-text shopping lists to Kroger products and pushes them to the family cart."
+
+[dependencies]
+anyhow = "1"
+axum = "0.8"
+base64 = "0.22"
+dotenvy = "0.15"
+rand = "0.9"
+regex = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "fs", "time"] }
+url = "2"
+
+[profile.release]
+strip = true

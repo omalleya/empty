@@ -1,10 +1,9 @@
-# Cart import server.
+# Cart import server (Rust — see server-rs/).
 #
 # First time only — authorize the family Kroger account (publishes 8088 so the
-# OAuth redirect can reach the container; opens a URL you complete in a browser):
+# OAuth redirect can reach the container; prints a URL you complete in a browser):
 #
-#   docker compose run --rm --service-ports server \
-#       uv run --frozen kroger-cart --login
+#   docker compose run --rm --service-ports server kroger-cart-server --login
 #
 # Then run the API:
 #
@@ -15,7 +14,7 @@
 
 services:
   server:
-    build: .
+    build: ./server-rs
     image: kroger-cart-server
     env_file: .env
     environment:

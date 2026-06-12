@@ -11,21 +11,25 @@ default:
 install:
     uv sync --extra server --extra dev
 
-# Run the API server with hot-reload — the "npm start" of this project
+# Run the API server (Rust) — the "npm start" of this project
 dev:
+    cargo run --manifest-path server-rs/Cargo.toml
+
+# Run the optimized server (closer to production)
+serve port="8000":
+    PORT={{port}} cargo run --release --manifest-path server-rs/Cargo.toml
+
+# Run the legacy Python API server with hot-reload
+dev-py:
     uv run --extra server uvicorn server.app:app --reload --port 8000
 
-# Run the server without reload (closer to production)
-serve port="8000":
-    uv run --extra server uvicorn server.app:app --host 0.0.0.0 --port {{port}}
-
-# One-time Kroger cart authorization (opens a browser, saves a refresh token)
+# One-time Kroger cart authorization (prints a URL, saves a refresh token)
 login:
-    uv run kroger-cart --login
+    cargo run --manifest-path server-rs/Cargo.toml -- --login
 
 # Find nearby stores for a zip (copy the locationId into .env)
 find-store zip:
-    uv run kroger-cart --find-store {{zip}}
+    cargo run --manifest-path server-rs/Cargo.toml -- --find-store {{zip}}
 
 # Import a shopping-list file into the cart
 import file:
@@ -44,7 +48,7 @@ fmt:
 
 # One-time cart login inside the container (publishes 8088 for the redirect)
 docker-login:
-    docker compose run --rm --service-ports server uv run --frozen kroger-cart --login
+    docker compose run --rm --service-ports server kroger-cart-server --login
 
 # Build + run the server in Docker
 docker-up:
