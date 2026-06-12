@@ -12,14 +12,16 @@ An LLM ([Claude](https://docs.claude.com)) turns messy list lines like
 
 | Path | What it is |
 |------|------------|
-| `kroger/` | the core package + `kroger-cart` CLI (this README) |
-| `server/` | FastAPI service wrapping the importer — `POST /cart/import` ([server/README.md](server/README.md)) |
+| `server-rs/` | **the backend** — Rust port of the importer + API server (`POST /cart/import`); what Docker runs |
+| `kroger/` | the original Python package + `kroger-cart` CLI (this README's CLI sections) |
+| `server/` | legacy FastAPI service, superseded by `server-rs/` ([server/README.md](server/README.md)) |
 | `ios/` | SwiftUI app: shopping list + dictation + Siri, posts to the server ([ios/README.md](ios/README.md)) |
 
-Flow end to end: **iOS app / Siri → `server` → `kroger` package → Kroger cart.**
-The CLI below drives the same `kroger` package directly.
+Flow end to end: **iOS app / Siri → `server-rs` → Kroger cart.**
+The Python CLI below drives the same Kroger + LLM flow directly.
 
-**Local dev:** `just dev` runs the API with hot-reload (the `npm start` here).
+**Local dev:** `just dev` runs the Rust API server (the `npm start` here);
+`docker compose up -d` runs the same server containerized.
 `just` (no args) lists every task — install, login, lint, docker, etc. Install
 [just](https://github.com/casey/just), or just read `justfile` for the raw
 commands.

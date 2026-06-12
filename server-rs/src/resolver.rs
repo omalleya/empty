@@ -327,7 +327,12 @@ impl Resolver {
     // ------------------------------------------------------------------ //
     fn save_cache(&self) {
         if let Ok(serialized) = serde_json::to_string_pretty(&self.cache) {
-            let _ = std::fs::write(&self.cache_path, serialized);
+            if let Err(err) = std::fs::write(&self.cache_path, serialized) {
+                eprintln!(
+                    "warning: failed to write UPC cache {}: {err}",
+                    self.cache_path.display()
+                );
+            }
         }
     }
 }
